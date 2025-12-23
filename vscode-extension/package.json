@@ -1,0 +1,236 @@
+{
+  "name": "open-notebook",
+  "displayName": "Open Notebook",
+  "description": "AI-powered research assistant integrated with VS Code - privacy-focused alternative to Google Notebook LM",
+  "version": "0.1.0",
+  "publisher": "open-notebook",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lfnovo/open-notebook"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning",
+    "Education"
+  ],
+  "keywords": [
+    "ai",
+    "research",
+    "notebook",
+    "ollama",
+    "chat",
+    "llm"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "openNotebook.start",
+        "title": "Open Notebook: Start Services",
+        "icon": "$(play)"
+      },
+      {
+        "command": "openNotebook.stop",
+        "title": "Open Notebook: Stop Services",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "openNotebook.restart",
+        "title": "Open Notebook: Restart Services",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "openNotebook.chat",
+        "title": "Open Notebook: Open Chat",
+        "icon": "$(comment)"
+      },
+      {
+        "command": "openNotebook.askSelection",
+        "title": "Open Notebook: Ask About Selection",
+        "icon": "$(question)"
+      },
+      {
+        "command": "openNotebook.agentWrite",
+        "title": "Open Notebook: Agent Write",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "openNotebook.attachFile",
+        "title": "Open Notebook: Attach Current File to Chat",
+        "icon": "$(file)"
+      },
+      {
+        "command": "openNotebook.attachFolder",
+        "title": "Open Notebook: Attach Folder to Chat",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "openNotebook.newNotebook",
+        "title": "Open Notebook: Create New Notebook",
+        "icon": "$(add)"
+      },
+      {
+        "command": "openNotebook.refreshNotebooks",
+        "title": "Open Notebook: Refresh Notebooks",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "openNotebook.refreshSources",
+        "title": "Open Notebook: Refresh Sources",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "openNotebook.openSettings",
+        "title": "Open Notebook: Open Settings",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "openNotebook.checkStatus",
+        "title": "Open Notebook: Check Service Status",
+        "icon": "$(pulse)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "openNotebook",
+          "title": "Open Notebook",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "openNotebook": [
+        {
+          "id": "openNotebook.notebooks",
+          "name": "Notebooks",
+          "icon": "$(book)",
+          "contextualTitle": "Open Notebook - Notebooks"
+        },
+        {
+          "id": "openNotebook.sources",
+          "name": "Sources",
+          "icon": "$(files)",
+          "contextualTitle": "Open Notebook - Sources"
+        },
+        {
+          "id": "openNotebook.status",
+          "name": "Status",
+          "icon": "$(pulse)",
+          "contextualTitle": "Open Notebook - Status"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Open Notebook",
+      "properties": {
+        "openNotebook.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:5055",
+          "description": "Open Notebook API URL (default: http://localhost:5055)"
+        },
+        "openNotebook.dockerComposePath": {
+          "type": "string",
+          "description": "Path to docker-compose.yml file (optional, for starting/stopping services)"
+        },
+        "openNotebook.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start Open Notebook services when VS Code starts"
+        },
+        "openNotebook.ollamaPath": {
+          "type": "string",
+          "description": "Path to Ollama executable (optional, if not in PATH)"
+        },
+        "openNotebook.defaultNotebook": {
+          "type": "string",
+          "description": "Default notebook ID to use for chat sessions"
+        },
+        "openNotebook.autoAttachWorkspaceContext": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically attach workspace context to chat messages"
+        },
+        "openNotebook.maxContextFiles": {
+          "type": "number",
+          "default": 50,
+          "description": "Maximum number of files to include in folder context"
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "openNotebook.askSelection",
+          "when": "editorHasSelection",
+          "group": "openNotebook@1"
+        },
+        {
+          "command": "openNotebook.agentWrite",
+          "when": "editorTextFocus",
+          "group": "openNotebook@2"
+        },
+        {
+          "command": "openNotebook.attachFile",
+          "group": "openNotebook@3"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "openNotebook.attachFile",
+          "when": "!explorerResourceIsFolder",
+          "group": "openNotebook@1"
+        },
+        {
+          "command": "openNotebook.attachFolder",
+          "when": "explorerResourceIsFolder",
+          "group": "openNotebook@2"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "openNotebook.newNotebook",
+          "when": "view == openNotebook.notebooks",
+          "group": "navigation"
+        },
+        {
+          "command": "openNotebook.refreshNotebooks",
+          "when": "view == openNotebook.notebooks",
+          "group": "navigation"
+        },
+        {
+          "command": "openNotebook.refreshSources",
+          "when": "view == openNotebook.sources",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "axios": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.40.0",
+    "typescript": "^5.0.0",
+    "@vscode/vsce": "^2.19.0"
+  }
+}
