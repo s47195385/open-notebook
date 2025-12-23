@@ -43,6 +43,16 @@ Configure local language models and embeddings with Ollama.
 - Model recommendations and optimization
 - Troubleshooting and best practices
 
+## 🔌 Developer Tools
+
+### 💻 **[VS Code Extension](vscode-extension.md)**
+Bring Open Notebook's AI capabilities directly into your development environment.
+- AI-powered code chat and generation
+- Service management from VS Code
+- Context-aware code assistance
+- Privacy-first local LLM integration
+- Notebook and source management
+
 ## 🔧 Content Processing
 
 ### ⚡ **[Transformations](transformations.md)**

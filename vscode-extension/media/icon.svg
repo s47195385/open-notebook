@@ -1,0 +1,26 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#4A90E2" />
+  
+  <!-- Book icon -->
+  <g transform="translate(32, 32)">
+    <!-- Book pages -->
+    <rect x="8" y="4" width="48" height="56" fill="#FFFFFF" rx="2" />
+    
+    <!-- Book spine -->
+    <rect x="4" y="4" width="8" height="56" fill="#2E5C8A" rx="2" />
+    
+    <!-- Page lines -->
+    <line x1="16" y1="16" x2="48" y2="16" stroke="#4A90E2" stroke-width="2" />
+    <line x1="16" y1="24" x2="48" y2="24" stroke="#4A90E2" stroke-width="2" />
+    <line x1="16" y1="32" x2="48" y2="32" stroke="#4A90E2" stroke-width="2" />
+    <line x1="16" y1="40" x2="44" y2="40" stroke="#4A90E2" stroke-width="2" />
+  </g>
+  
+  <!-- AI sparkle accent -->
+  <g transform="translate(80, 24)">
+    <circle cx="0" cy="0" r="3" fill="#FFD700" />
+    <line x1="-6" y1="0" x2="6" y2="0" stroke="#FFD700" stroke-width="2" />
+    <line x1="0" y1="-6" x2="0" y2="6" stroke="#FFD700" stroke-width="2" />
+  </g>
+</svg>
