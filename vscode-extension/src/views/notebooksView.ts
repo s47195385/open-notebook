@@ -118,7 +118,8 @@ export function registerNotebooksTreeView(context: vscode.ExtensionContext): Not
           break;
         case 'View in Browser':
           // Open in browser (assuming frontend runs on port 8502)
-          const frontendUrl = apiUrl.replace('5055', '8502');
+          const apiUrlStr = String(apiUrl);
+          const frontendUrl = apiUrlStr.replace('5055', '8502');
           vscode.env.openExternal(vscode.Uri.parse(`${frontendUrl}/notebooks/${notebook.id}`));
           break;
         case 'Copy ID':

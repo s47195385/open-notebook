@@ -78,6 +78,10 @@ venv.bak/
 # VS Code
 .vscode/
 
+# Node.js
+node_modules/
+*.vsix
+
 # Spyder project settings
 .spyderproject
 .spyproject
