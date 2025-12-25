@@ -1,6 +1,20 @@
 #!/bin/bash
 # Simple script to run Open Notebook with Ollama
-# Minimal commands required!
+# ================================================
+# This is the EASIEST way to get Open Notebook running!
+#
+# What it does:
+# 1. Checks if Docker is installed and running (starts it if possible)
+# 2. Runs setup.sh automatically if configuration doesn't exist
+# 3. Pulls the latest Open Notebook Docker image
+# 4. Creates and starts the container with your configuration
+# 5. Shows you where to access Open Notebook
+#
+# Usage:
+#   ./run.sh
+#
+# That's it! One command to get everything running.
+# The script handles existing containers gracefully and provides helpful status messages.
 
 set -e
 

@@ -2,8 +2,21 @@
 set -e
 
 # Open Notebook Setup Script
+# ==========================
 # This script helps you set up Open Notebook with Ollama (local AI models)
-# Designed to work in minimal environments with missing commands
+# 
+# Features:
+# - Works in minimal Docker environments with missing commands
+# - Checks for required tools (docker, curl) and offers to install them
+# - Creates .env and docker.env files configured for Ollama
+# - Tests Ollama connection and offers to pull recommended models
+# - Provides clear next steps for running Open Notebook
+#
+# Usage:
+#   ./setup.sh
+#
+# The script will ask you where Ollama is running and configure accordingly.
+# No API keys required when using Ollama!
 
 # Colors for output (fallback to no color if tput unavailable)
 if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
@@ -84,12 +97,20 @@ check_command() {
 
 # Detect package manager and set install command
 detect_package_manager() {
+    local sudo_cmd=""
+    # Check if we need sudo (not root and not using brew)
+    if [ "$EUID" -ne 0 ] && ! command -v brew >/dev/null 2>&1; then
+        if command -v sudo >/dev/null 2>&1; then
+            sudo_cmd="sudo "
+        fi
+    fi
+    
     if command -v apt-get >/dev/null 2>&1; then
-        echo "apt-get install -y"
+        echo "${sudo_cmd}apt-get install -y"
     elif command -v yum >/dev/null 2>&1; then
-        echo "yum install -y"
+        echo "${sudo_cmd}yum install -y"
     elif command -v apk >/dev/null 2>&1; then
-        echo "apk add"
+        echo "${sudo_cmd}apk add"
     elif command -v brew >/dev/null 2>&1; then
         echo "brew install"
     else
@@ -174,10 +195,25 @@ EOF
     # Add or update Ollama configuration
     if [ -n "$OLLAMA_API_BASE" ]; then
         if grep -q "^OLLAMA_API_BASE=" "$env_file" 2>/dev/null; then
+            # Uncommented line exists, update it
             sed -i.bak "s|^OLLAMA_API_BASE=.*|OLLAMA_API_BASE=\"${OLLAMA_API_BASE}\"|" "$env_file"
             rm -f "${env_file}.bak"
+        elif grep -q "^# OLLAMA_API_BASE=" "$env_file" 2>/dev/null; then
+            # Commented line exists, uncomment and update it
+            sed -i.bak "s|^# OLLAMA_API_BASE=.*|OLLAMA_API_BASE=\"${OLLAMA_API_BASE}\"|" "$env_file"
+            rm -f "${env_file}.bak"
         else
-            echo "OLLAMA_API_BASE=\"${OLLAMA_API_BASE}\"" >> "$env_file"
+            # No line exists, add it after the OLLAMA comment section
+            if grep -q "^# OLLAMA$" "$env_file" 2>/dev/null; then
+                # Insert after the # OLLAMA line
+                sed -i.bak "/^# OLLAMA$/a OLLAMA_API_BASE=\"${OLLAMA_API_BASE}\"" "$env_file"
+                rm -f "${env_file}.bak"
+            else
+                # Just append to end
+                echo "" >> "$env_file"
+                echo "# OLLAMA CONFIGURATION" >> "$env_file"
+                echo "OLLAMA_API_BASE=\"${OLLAMA_API_BASE}\"" >> "$env_file"
+            fi
         fi
         print_success "Ollama configuration added to .env"
     fi
