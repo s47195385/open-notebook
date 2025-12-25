@@ -109,6 +109,32 @@ Learn more about our project at [https://www.open-notebook.ai](https://www.open-
 
 ## 🚀 Quick Start
 
+### 🎯 Easy Setup with Ollama (Local AI - No API Keys!)
+
+**New!** Use our automated setup and run scripts for the easiest installation:
+
+```bash
+git clone https://github.com/lfnovo/open-notebook.git
+cd open-notebook
+./run.sh
+```
+
+**That's it!** The script will:
+- ✅ Start Docker daemon if needed
+- ✅ Run setup automatically (creates Ollama config)
+- ✅ Pull and start the Docker container
+- ✅ Show you where to access Open Notebook
+
+**Or configure first, then run:**
+```bash
+./setup.sh  # Interactive configuration
+./run.sh    # Start the container
+```
+
+**See [OLLAMA_QUICKSTART.md](OLLAMA_QUICKSTART.md) for detailed instructions.**
+
+---
+
 **Docker Images Available:**
 - **Docker Hub**: `lfnovo/open_notebook:v1-latest-single`
 - **GitHub Container Registry**: `ghcr.io/lfnovo/open-notebook:v1-latest-single`
