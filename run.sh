@@ -66,7 +66,7 @@ if ! docker info &> /dev/null; then
     
     # Wait a bit for Docker to start
     echo "Waiting for Docker daemon to start..."
-    for i in {1..10}; do
+    for _ in {1..10}; do
         if docker info &> /dev/null; then
             echo -e "${GREEN}✓${NC} Docker daemon started successfully"
             break
@@ -191,7 +191,7 @@ else
     
     # Wait for Ollama to start
     echo "Waiting for Ollama to start..."
-    for i in {1..30}; do
+    for _ in {1..30}; do
         if curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then
             echo -e "${GREEN}✓${NC} Ollama service started successfully"
             echo "  Log file: $OLLAMA_LOG"
@@ -371,7 +371,7 @@ if docker ps --format '{{.Names}}' | grep -q '^open-notebook$'; then
                         npx vsce package
                     }
                     
-                    VSIX_FILE=$(ls -t *.vsix 2>/dev/null | head -1)
+                    VSIX_FILE=$(find . -maxdepth 1 -name "*.vsix" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
                     if [ -n "$VSIX_FILE" ]; then
                         echo "Installing extension to VS Code..."
                         code --install-extension "$VSIX_FILE" --force
