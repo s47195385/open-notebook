@@ -122,13 +122,22 @@ cd open-notebook
 **That's it!** The script will:
 - ✅ Start Docker daemon if needed
 - ✅ Run setup automatically (creates Ollama config)
+- ✅ **Start Ollama service automatically**
+- ✅ **Pull recommended AI models** (with your permission)
 - ✅ Pull and start the Docker container
+- ✅ **Install VS Code extension** (if VS Code is available)
 - ✅ Show you where to access Open Notebook
+
+**Stop everything when done:**
+```bash
+./shutdown.sh
+```
 
 **Or configure first, then run:**
 ```bash
-./setup.sh  # Interactive configuration
-./run.sh    # Start the container
+./setup.sh    # Interactive configuration
+./run.sh      # Start everything (Ollama + Docker + VS Code)
+./shutdown.sh # Stop everything
 ```
 
 **See [OLLAMA_QUICKSTART.md](OLLAMA_QUICKSTART.md) for detailed instructions.**

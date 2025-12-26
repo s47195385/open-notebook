@@ -1,20 +1,25 @@
 #!/bin/bash
-# Simple script to run Open Notebook with Ollama
-# ================================================
-# This is the EASIEST way to get Open Notebook running!
+# Complete startup script for Open Notebook with Ollama
+# =======================================================
+# This script provides COMPLETE automation for Open Notebook!
 #
 # What it does:
 # 1. Checks if Docker is installed and running (starts it if possible)
 # 2. Runs setup.sh automatically if configuration doesn't exist
-# 3. Pulls the latest Open Notebook Docker image
-# 4. Creates and starts the container with your configuration
-# 5. Shows you where to access Open Notebook
+# 3. Starts Ollama service (if not already running)
+# 4. Pulls the latest Open Notebook Docker image
+# 5. Creates and starts the container with your configuration
+# 6. Installs VS Code extension (if VS Code is available)
+# 7. Shows you where to access Open Notebook
 #
 # Usage:
 #   ./run.sh
 #
+# To stop everything:
+#   ./shutdown.sh
+#
 # That's it! One command to get everything running.
-# The script handles existing containers gracefully and provides helpful status messages.
+# The script handles existing services gracefully and provides helpful status messages.
 
 set -e
 
@@ -115,7 +120,142 @@ elif [ -f ".env" ]; then
 fi
 
 echo ""
-echo -e "${BLUE}Starting Open Notebook...${NC}"
+echo -e "${BLUE}========================================${NC}"
+echo -e "${BLUE}   Starting Ollama Backend${NC}"
+echo -e "${BLUE}========================================${NC}"
+echo ""
+
+# Check if Ollama is installed
+if ! command -v ollama &> /dev/null; then
+    echo -e "${YELLOW}⚠${NC} Ollama is not installed"
+    echo ""
+    echo "Installing Ollama..."
+    
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux
+        curl -fsSL https://ollama.ai/install.sh | sh
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        if command -v brew &> /dev/null; then
+            brew install ollama
+        else
+            echo -e "${RED}✗ Homebrew not found. Please install Ollama manually:${NC}"
+            echo "  Visit: https://ollama.ai/download"
+            exit 1
+        fi
+    else
+        echo -e "${RED}✗ Unsupported OS. Please install Ollama manually:${NC}"
+        echo "  Visit: https://ollama.ai/download"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✓${NC} Ollama installed successfully"
+else
+    echo -e "${GREEN}✓${NC} Ollama is installed"
+fi
+
+# Check if Ollama is already running
+if curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then
+    echo -e "${GREEN}✓${NC} Ollama service is already running"
+else
+    echo -e "${YELLOW}⚠${NC} Ollama service is not running"
+    echo ""
+    echo "Starting Ollama service..."
+    
+    # Start Ollama in the background with external access
+    export OLLAMA_HOST=0.0.0.0:11434
+    
+    # Create a log directory for Ollama
+    mkdir -p "$HOME/.ollama/logs"
+    OLLAMA_LOG="$HOME/.ollama/logs/ollama-$(date +%Y%m%d-%H%M%S).log"
+    
+    # Start Ollama in background based on OS
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux - use systemd if available
+        if command -v systemctl &> /dev/null; then
+            echo "Starting Ollama via systemd..."
+            sudo systemctl start ollama 2>/dev/null || {
+                echo "Systemd not available, starting manually..."
+                nohup ollama serve > "$OLLAMA_LOG" 2>&1 &
+                echo $! > "$HOME/.ollama/ollama.pid"
+            }
+        else
+            nohup ollama serve > "$OLLAMA_LOG" 2>&1 &
+            echo $! > "$HOME/.ollama/ollama.pid"
+        fi
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        nohup ollama serve > "$OLLAMA_LOG" 2>&1 &
+        echo $! > "$HOME/.ollama/ollama.pid"
+    fi
+    
+    # Wait for Ollama to start
+    echo "Waiting for Ollama to start..."
+    for i in {1..30}; do
+        if curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then
+            echo -e "${GREEN}✓${NC} Ollama service started successfully"
+            echo "  Log file: $OLLAMA_LOG"
+            break
+        fi
+        sleep 1
+        echo -n "."
+    done
+    echo ""
+    
+    # Final check
+    if ! curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then
+        echo -e "${RED}✗ Failed to start Ollama service${NC}"
+        echo ""
+        echo "Please start Ollama manually:"
+        echo "  export OLLAMA_HOST=0.0.0.0:11434"
+        echo "  ollama serve"
+        echo ""
+        echo "Then run this script again."
+        exit 1
+    fi
+fi
+
+# Check if recommended models are available
+echo ""
+echo "Checking for AI models..."
+MODELS_OUTPUT=$(curl -s http://localhost:11434/api/tags 2>/dev/null || echo '{"models":[]}')
+
+if echo "$MODELS_OUTPUT" | grep -q "qwen"; then
+    echo -e "${GREEN}✓${NC} Language model (qwen) found"
+else
+    echo -e "${YELLOW}⚠${NC} Language model (qwen) not found"
+    echo ""
+    read -p "Would you like to pull the recommended language model (qwen3)? [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "Pulling qwen3 model (this may take several minutes)..."
+        ollama pull qwen3
+        echo -e "${GREEN}✓${NC} qwen3 model installed"
+    else
+        echo "Skipping model installation. You can install later with: ollama pull qwen3"
+    fi
+fi
+
+if echo "$MODELS_OUTPUT" | grep -q "mxbai-embed-large"; then
+    echo -e "${GREEN}✓${NC} Embedding model (mxbai-embed-large) found"
+else
+    echo -e "${YELLOW}⚠${NC} Embedding model (mxbai-embed-large) not found"
+    echo ""
+    read -p "Would you like to pull the recommended embedding model? [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "Pulling mxbai-embed-large model..."
+        ollama pull mxbai-embed-large
+        echo -e "${GREEN}✓${NC} mxbai-embed-large model installed"
+    else
+        echo "Skipping model installation. You can install later with: ollama pull mxbai-embed-large"
+    fi
+fi
+
+echo ""
+echo -e "${BLUE}========================================${NC}"
+echo -e "${BLUE}   Starting Open Notebook Docker${NC}"
+echo -e "${BLUE}========================================${NC}"
 echo ""
 
 # Check if container already exists
@@ -190,19 +330,85 @@ if docker ps --format '{{.Names}}' | grep -q '^open-notebook$'; then
     echo -e "🌐 Web Interface: ${GREEN}http://localhost:8502${NC}"
     echo -e "📚 API Documentation: ${BLUE}http://localhost:5055/docs${NC}"
     echo ""
+    echo -e "${GREEN}✓${NC} Ollama Backend: Running on port 11434"
+    echo -e "${GREEN}✓${NC} Open Notebook: Running in Docker"
+    echo ""
     echo -e "${YELLOW}Useful Commands:${NC}"
-    echo "  View logs:    docker logs -f open-notebook"
-    echo "  Stop:         docker stop open-notebook"
-    echo "  Restart:      docker restart open-notebook"
-    echo "  Remove:       docker rm -f open-notebook"
+    echo "  View logs:      docker logs -f open-notebook"
+    echo "  Stop all:       ./shutdown.sh"
+    echo "  Restart:        docker restart open-notebook"
+    echo "  Ollama models:  ollama list"
     echo ""
-    echo -e "${YELLOW}Ollama Setup:${NC}"
-    echo "  If you haven't set up Ollama yet:"
-    echo "  1. Install: curl -fsSL https://ollama.ai/install.sh | sh"
-    echo "  2. Start with external access: export OLLAMA_HOST=0.0.0.0:11434 && ollama serve"
-    echo "  3. Pull models: ollama pull qwen3 && ollama pull mxbai-embed-large"
+    
+    # Check for VS Code and offer to set up extension
+    if command -v code &> /dev/null; then
+        echo -e "${BLUE}========================================${NC}"
+        echo -e "${BLUE}   VS Code Extension Setup${NC}"
+        echo -e "${BLUE}========================================${NC}"
+        echo ""
+        
+        if [ -d "vscode-extension" ]; then
+            echo -e "${GREEN}✓${NC} VS Code extension found"
+            echo ""
+            read -p "Would you like to install/update the VS Code extension? [y/N] " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                echo "Installing VS Code extension..."
+                cd vscode-extension
+                
+                # Check if npm is installed
+                if command -v npm &> /dev/null; then
+                    echo "Installing dependencies..."
+                    npm install
+                    
+                    echo "Compiling extension..."
+                    npm run compile
+                    
+                    echo "Packaging extension..."
+                    npx vsce package || {
+                        echo -e "${YELLOW}⚠${NC} vsce not found, installing it..."
+                        npm install -g @vscode/vsce
+                        npx vsce package
+                    }
+                    
+                    VSIX_FILE=$(ls -t *.vsix 2>/dev/null | head -1)
+                    if [ -n "$VSIX_FILE" ]; then
+                        echo "Installing extension to VS Code..."
+                        code --install-extension "$VSIX_FILE" --force
+                        echo -e "${GREEN}✓${NC} VS Code extension installed successfully!"
+                        echo ""
+                        echo "To use the extension:"
+                        echo "  1. Restart VS Code or reload window (Ctrl+Shift+P → 'Reload Window')"
+                        echo "  2. Open Command Palette (Ctrl+Shift+P)"
+                        echo "  3. Search for 'Open Notebook' commands"
+                    else
+                        echo -e "${RED}✗${NC} Failed to package extension"
+                    fi
+                else
+                    echo -e "${YELLOW}⚠${NC} npm not found. Please install Node.js to build the extension."
+                fi
+                
+                cd ..
+            fi
+        else
+            echo -e "${YELLOW}⚠${NC} VS Code extension directory not found"
+        fi
+        echo ""
+    fi
+    
+    echo -e "${BLUE}========================================${NC}"
+    echo -e "${BLUE}   Next Steps${NC}"
+    echo -e "${BLUE}========================================${NC}"
     echo ""
-    echo "See OLLAMA_QUICKSTART.md for detailed instructions"
+    echo "1. Open http://localhost:8502 in your browser"
+    echo "2. Go to Settings → AI Models"
+    echo "3. Add your Ollama models:"
+    echo "   • Language: ollama/qwen3"
+    echo "   • Embedding: ollama/mxbai-embed-large"
+    echo "4. Start creating notebooks and adding sources!"
+    echo ""
+    echo "📖 For detailed help, see: OLLAMA_QUICKSTART.md"
+    echo "💬 Join our Discord: https://discord.gg/37XJPXfz2w"
     echo ""
 else
     echo ""
