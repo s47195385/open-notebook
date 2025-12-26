@@ -66,14 +66,31 @@ else
         PID=$(cat "$HOME/.ollama/ollama.pid")
         if ps -p "$PID" > /dev/null 2>&1; then
             echo "Stopping Ollama process (PID: $PID)..."
-            kill "$PID" 2>/dev/null || sudo kill "$PID" 2>/dev/null || true
-            sleep 2
+            # Try graceful shutdown first with TERM signal
+            kill -TERM "$PID" 2>/dev/null || true
             
-            # Check if it's still running
+            # Wait up to 5 seconds for graceful shutdown
+            for _ in {1..5}; do
+                if ! ps -p "$PID" > /dev/null 2>&1; then
+                    break
+                fi
+                sleep 1
+            done
+            
+            # If still running, force kill
+            if ps -p "$PID" > /dev/null 2>&1; then
+                echo "Process still running, forcing shutdown..."
+                kill -KILL "$PID" 2>/dev/null || true
+                sleep 1
+            fi
+            
+            # Check if it's stopped
             if ! ps -p "$PID" > /dev/null 2>&1; then
                 rm -f "$HOME/.ollama/ollama.pid"
                 STOPPED=true
                 echo -e "${GREEN}✓${NC} Ollama service stopped"
+            else
+                echo -e "${YELLOW}⚠${NC} Could not stop Ollama process (may need manual intervention)"
             fi
         else
             # PID file exists but process is not running

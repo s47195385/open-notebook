@@ -371,8 +371,33 @@ if docker ps --format '{{.Names}}' | grep -q '^open-notebook$'; then
                         npx vsce package
                     }
                     
-                    VSIX_FILE=$(find . -maxdepth 1 -name "*.vsix" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
-                    if [ -n "$VSIX_FILE" ]; then
+                    # Find the newest .vsix file (cross-platform)
+                    VSIX_FILE=""
+                    if command -v stat &> /dev/null; then
+                        # Use stat for finding newest file
+                        NEWEST_TIME=0
+                        shopt -s nullglob
+                        for f in *.vsix; do
+                            FILE_TIME=$(stat -c %Y "$f" 2>/dev/null || stat -f %m "$f" 2>/dev/null || echo 0)
+                            if [ "$FILE_TIME" -gt "$NEWEST_TIME" ]; then
+                                NEWEST_TIME=$FILE_TIME
+                                VSIX_FILE=$f
+                            fi
+                        done
+                        shopt -u nullglob
+                    fi
+                    
+                    # Fallback if stat failed or no file found
+                    if [ -z "$VSIX_FILE" ]; then
+                        for f in *.vsix; do
+                            if [ -f "$f" ]; then
+                                VSIX_FILE=$f
+                                break
+                            fi
+                        done
+                    fi
+                    
+                    if [ -n "$VSIX_FILE" ] && [ -f "$VSIX_FILE" ]; then
                         echo "Installing extension to VS Code..."
                         code --install-extension "$VSIX_FILE" --force
                         echo -e "${GREEN}✓${NC} VS Code extension installed successfully!"
