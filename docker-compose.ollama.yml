@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  open_notebook:
+    image: lfnovo/open_notebook:v1-latest-single
+    # Or use: ghcr.io/lfnovo/open-notebook:v1-latest-single
+    container_name: open-notebook
+    ports:
+      - "8502:8502"  # Web UI
+      - "5055:5055"  # API (required!)
+    environment:
+      # API Configuration
+      - API_URL=http://localhost:5055
+      
+      # Ollama Configuration
+      # IMPORTANT: Ollama must be running on host with: 
+      #   export OLLAMA_HOST=0.0.0.0:11434
+      #   ollama serve
+      - OLLAMA_API_BASE=http://host.docker.internal:11434
+      
+      # Database Configuration (for single-container)
+      - SURREAL_URL=ws://localhost:8000/rpc
+      - SURREAL_USER=root
+      - SURREAL_PASSWORD=root
+      - SURREAL_NAMESPACE=open_notebook
+      - SURREAL_DATABASE=production
+      
+      # Optional: Increase timeouts for CPU-based inference
+      # - API_CLIENT_TIMEOUT=600
+      # - ESPERANTO_LLM_TIMEOUT=300
+    volumes:
+      - ./notebook_data:/app/data      # Your notebooks and content
+      - ./surreal_data:/mydata          # Database files
+    restart: unless-stopped
+
+# INSTRUCTIONS:
+# 
+# 1. Install and start Ollama on your host machine:
+#    curl -fsSL https://ollama.ai/install.sh | sh
+#    export OLLAMA_HOST=0.0.0.0:11434
+#    ollama serve
+#
+# 2. Pull recommended models:
+#    ollama pull qwen3                # Language model
+#    ollama pull mxbai-embed-large    # Embedding model
+#
+# 3. Start Open Notebook:
+#    docker compose -f docker-compose.ollama.yml up -d
+#
+# 4. Access at: http://localhost:8502
+#
+# TROUBLESHOOTING:
+# - If "Ollama unavailable": Make sure Ollama is running with OLLAMA_HOST=0.0.0.0:11434
+# - Check logs: docker compose -f docker-compose.ollama.yml logs -f
+# - Test Ollama: curl http://localhost:11434/api/tags
+#
+# For more help, see: OLLAMA_QUICKSTART.md
