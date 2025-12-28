@@ -14,17 +14,33 @@ cd open-notebook
 **That's it!** The `run.sh` script will:
 - ✅ Check if Docker daemon is running (and start it if possible)
 - ✅ Run setup.sh automatically if no configuration exists
-- ✅ Pull the Docker image
-- ✅ Create and start the container
-- ✅ Show you the URL to access Open Notebook
+- ✅ **Start Ollama service automatically** (installs if needed)
+- ✅ **Pull recommended AI models** (with your permission)
+- ✅ Pull the latest Open Notebook Docker image
+- ✅ Create and start the container with your configuration
+- ✅ **Set up VS Code extension** (if VS Code is installed)
+- ✅ Show you where to access Open Notebook
+
+**To stop everything:**
+```bash
+./shutdown.sh
+```
+
+The `shutdown.sh` script will:
+- ✅ Stop the Open Notebook Docker container
+- ✅ Stop the Ollama service (if started by run.sh)
+- ✅ Clean up gracefully
 
 **What the script does automatically:**
 1. Checks for Docker and starts the daemon if needed
 2. Runs `setup.sh` if configuration files don't exist
-3. Creates data directories
-4. Pulls the latest Open Notebook image
-5. Starts the Docker container with your configuration
-6. Shows you where to access the application
+3. **Installs and starts Ollama service**
+4. **Offers to pull recommended AI models**
+5. Creates data directories
+6. Pulls the latest Open Notebook image
+7. Starts the Docker container with your configuration
+8. **Installs VS Code extension (optional)**
+9. Shows you where to access the application
 
 **Alternative: Setup first, then run:**
 
@@ -32,7 +48,8 @@ cd open-notebook
 git clone https://github.com/lfnovo/open-notebook.git
 cd open-notebook
 ./setup.sh   # Configure Ollama settings
-./run.sh     # Start Docker container
+./run.sh     # Start everything (Ollama + Docker + VS Code extension)
+./shutdown.sh # Stop everything when done
 ```
 
 The `setup.sh` script will guide you through:
@@ -195,6 +212,34 @@ docker logs open-notebook
 
 # Follow logs in real-time
 docker logs -f open-notebook
+
+# Ollama logs (if started by run.sh)
+tail -f ~/.ollama/logs/ollama-*.log
+```
+
+## 🛑 Stopping Services
+
+To stop all services (Open Notebook + Ollama):
+
+```bash
+./shutdown.sh
+```
+
+This will:
+- Stop the Open Notebook Docker container
+- Stop the Ollama service (if started by run.sh)
+- Optionally remove the container (preserving your data)
+
+**Manual shutdown if needed:**
+```bash
+# Stop Docker container
+docker stop open-notebook
+
+# Stop Ollama (if started by run.sh)
+kill $(cat ~/.ollama/ollama.pid)
+
+# Or stop via systemd
+sudo systemctl stop ollama
 ```
 
 ## 🆘 Troubleshooting
